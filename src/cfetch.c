@@ -8,6 +8,15 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
 
+int progress_callback(double dltotal, double dlnow) {
+    if(dltotal > 0) {
+        int progress = (int)((dlnow/dltotal) * 100);
+        printf("\rDownloading: %d%%", progress);
+        fflush(stdout);
+    }
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     CURL *curl;
     CURLcode res;
@@ -50,11 +59,16 @@ int main(int argc, char *argv[]) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
 
+        curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_callback);
+        curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);
+
+        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+
         res = curl_easy_perform(curl);
         if(res != CURLE_OK) {
             fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
         } else {
-            printf("Download successful\n");
+            printf("\nDownload successful\n");
         }
         fclose(file);
         curl_easy_cleanup(curl);
