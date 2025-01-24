@@ -1,19 +1,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include <curl/curl.h>
 
 size_t write_callback(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     CURL *curl;
     CURLcode res;
     FILE *file;
 
-    char *url = "https://getsamplefiles.com/download/zip/sample-1.zip";
-    char *output_filename = "sample.zip";
+    char *url = NULL;
+    char *output_filename = NULL;
+
+    int opt;
+
+    while((opt = getopt(argc, argv, "u:o:")) != -1) {
+        switch (opt) {
+            case 'u':
+                url = optarg;
+                break;
+            case 'o':
+                output_filename = optarg;
+                break;
+            default:
+                fprintf(stderr, "Usage: %s -u <url> -o <output_filename>\n", argv[0]);
+                exit(1);
+        }
+    }
+
+    if (url == NULL || output_filename == NULL) {
+        fprintf(stderr, "Error: URL (-u) and output file name (-o) are required.\n");
+        fprintf(stderr, "Usage: %s -u <url> -o <output_filename>\n", argv[0]);
+        exit(1);
+    }
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
